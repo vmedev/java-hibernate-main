@@ -16,4 +16,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     List<Book> findByAuthor(@Param("author") String author) ;
     // I know that Spring Data JPA can generate query from method name.
     // I wanted to practice writing @Query
+
+    List<Book> findByPublicationYearGreaterThan(int year);
+    List<Book> findByTitleContainingIgnoreCase(String title);
 }

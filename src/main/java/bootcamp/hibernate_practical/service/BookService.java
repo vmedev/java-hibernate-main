@@ -4,6 +4,7 @@ import bootcamp.hibernate_practical.dto.BookResponse;
 import bootcamp.hibernate_practical.dto.CreateBookRequest;
 import bootcamp.hibernate_practical.dto.UpdateBookRequest;
 import bootcamp.hibernate_practical.entity.Book;
+import bootcamp.hibernate_practical.exception.BookNotFoundException;
 import bootcamp.hibernate_practical.repository.BookRepository;
 import org.springframework.stereotype.Service;
 
@@ -41,13 +42,13 @@ public class BookService {
 
     public BookResponse getBookById(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No book found by id: " + id));
+                .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
         return mapToResponse(book);
     }
 
     public BookResponse updateBook(Long id, UpdateBookRequest request) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No book found by id: " + id));
+                .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
 
         if (request.getTitle() != null) {
             book.setTitle(request.getTitle());
@@ -68,7 +69,7 @@ public class BookService {
 
     public void deleteBook(Long id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No book found by id: " + id));
+                .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
         bookRepository.delete(book);
     }
 
@@ -78,6 +79,7 @@ public class BookService {
         for (Book book : books) {
             response.add(mapToResponse(book));
         }
+
         return response;
     }
 
@@ -87,7 +89,55 @@ public class BookService {
         for (Book book : books) {
             response.add(mapToResponse(book));
         }
+
         return response;
+    }
+
+    public List<BookResponse> findByPublicationYearAfter(int year) {
+        List<Book> books = bookRepository.findByPublicationYearGreaterThan(year);
+        List<BookResponse> response = new ArrayList<>();
+        for (Book book : books) {
+            response.add(mapToResponse(book));
+        }
+
+        return response;
+    }
+
+    public long countBooks() {
+        return bookRepository.count();
+    }
+
+    public List<BookResponse> findByTitleContaining(String title) {
+        List<Book> books = bookRepository.findByTitleContainingIgnoreCase(title);
+        List<BookResponse> response = new ArrayList<>();
+        for (Book book : books) {
+            response.add(mapToResponse(book));
+        }
+        return response;
+    }
+
+    public BookResponse borrowBook(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
+        if (!book.isAvailable()) {
+
+            throw new IllegalStateException("Book is already borrowed: " + id);
+        }
+        book.setAvailable(false);
+        bookRepository.save(book);
+        return mapToResponse(book);
+    }
+
+    public BookResponse returnBook(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
+        if (book.isAvailable()) {
+            throw new IllegalStateException("Book is not borrowed: " + id);
+        }
+
+        book.setAvailable(true);
+        bookRepository.save(book);
+        return mapToResponse(book);
     }
 
     private BookResponse mapToResponse(Book book) {
