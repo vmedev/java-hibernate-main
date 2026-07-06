@@ -8,7 +8,6 @@ import bootcamp.hibernate_practical.exception.BookNotFoundException;
 import bootcamp.hibernate_practical.repository.BookRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -32,12 +31,9 @@ public class BookService {
     }
 
     public List<BookResponse> getAllBooks() {
-        List<Book> books = bookRepository.findAll();
-        List<BookResponse> response = new ArrayList<>();
-        for(Book book: books) {
-            response.add(mapToResponse(book));
-        }
-        return response;
+        return bookRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public BookResponse getBookById(Long id) {
@@ -51,17 +47,30 @@ public class BookService {
                 .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
 
         if (request.getTitle() != null) {
+            if (request.getTitle().isBlank()) {
+                throw new IllegalArgumentException("title must not be blank");
+            }
             book.setTitle(request.getTitle());
         }
         if (request.getAuthor() != null) {
+            if (request.getAuthor().isBlank()) {
+                throw new IllegalArgumentException("author must not be blank");
+            }
             book.setAuthor(request.getAuthor());
         }
         if (request.getGenre() != null) {
+            if (request.getGenre().isBlank()) {
+                throw new IllegalArgumentException("genre must not be blank");
+            }
             book.setGenre(request.getGenre());
         }
-        book.setPublicationYear(request.getPublicationYear());
+        if (request.getPublicationYear() != 0) {
+            if (request.getPublicationYear() < 0) {
+                throw new IllegalArgumentException("publicationYear must be positive");
+            }
+            book.setPublicationYear(request.getPublicationYear());
+        }
         book.setAvailable(request.isAvailable());
-        // I didn't find the solution without changing request fields to wrapper class for this values
 
         bookRepository.save(book);
         return mapToResponse(book);
@@ -74,33 +83,21 @@ public class BookService {
     }
 
     public List<BookResponse> findByAuthor(String author) {
-        List<Book> books = bookRepository.findByAuthor(author);
-        List<BookResponse> response = new ArrayList<>();
-        for (Book book : books) {
-            response.add(mapToResponse(book));
-        }
-
-        return response;
+        return bookRepository.findByAuthor(author).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    public List<BookResponse> findAvailableBooks(){
-        List<Book> books = bookRepository.findByAvailableTrue();
-        List<BookResponse> response = new ArrayList<>();
-        for (Book book : books) {
-            response.add(mapToResponse(book));
-        }
-
-        return response;
+    public List<BookResponse> findAvailableBooks() {
+        return bookRepository.findByAvailableTrue().stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public List<BookResponse> findByPublicationYearAfter(int year) {
-        List<Book> books = bookRepository.findByPublicationYearGreaterThan(year);
-        List<BookResponse> response = new ArrayList<>();
-        for (Book book : books) {
-            response.add(mapToResponse(book));
-        }
-
-        return response;
+        return bookRepository.findByPublicationYearGreaterThan(year).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public long countBooks() {
@@ -108,19 +105,15 @@ public class BookService {
     }
 
     public List<BookResponse> findByTitleContaining(String title) {
-        List<Book> books = bookRepository.findByTitleContainingIgnoreCase(title);
-        List<BookResponse> response = new ArrayList<>();
-        for (Book book : books) {
-            response.add(mapToResponse(book));
-        }
-        return response;
+        return bookRepository.findByTitleContainingIgnoreCase(title).stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public BookResponse borrowBook(Long id) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new BookNotFoundException("No book found by id: " + id));
         if (!book.isAvailable()) {
-
             throw new IllegalStateException("Book is already borrowed: " + id);
         }
         book.setAvailable(false);
@@ -134,7 +127,6 @@ public class BookService {
         if (book.isAvailable()) {
             throw new IllegalStateException("Book is not borrowed: " + id);
         }
-
         book.setAvailable(true);
         bookRepository.save(book);
         return mapToResponse(book);
