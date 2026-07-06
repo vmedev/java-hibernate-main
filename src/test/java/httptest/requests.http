@@ -1,0 +1,47 @@
+### GET no auth
+GET http://localhost:8080/api/books
+
+### GET user
+GET http://localhost:8080/api/books
+Authorization: Basic dXNlcjp1c2Vy
+
+### POST admin
+POST http://localhost:8080/api/books
+Authorization: Basic YWRtaW46YWRtaW4=
+Content-Type: application/json
+
+{
+  "title": "Test Book",
+  "author": "Test Author",
+  "genre": "Fiction",
+  "publicationYear": 2020
+}
+
+### GET admin
+GET http://localhost:8080/api/books
+Authorization: Basic admin admin
+
+### POST user (should be 403)
+POST http://localhost:8080/api/books
+Authorization: Basic user user
+Content-Type: application/json
+
+{
+  "title": "Test Book",
+  "author": "Test Author",
+  "genre": "Fiction",
+  "publicationYear": 2020
+}
+
+### PUT user (should be 403)
+PUT http://localhost:8080/api/books/1
+Authorization: Basic user user
+Content-Type: application/json
+
+{
+  "title": "Updated Title"
+}
+
+### DELETE user (should be 403)
+DELETE http://localhost:8080/api/books/1
+Authorization: Basic user user

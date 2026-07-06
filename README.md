@@ -1,19 +1,29 @@
-# Practical Task: Library Book Tracker API
+# Hibernate Practical - Spring Security
 
-Vladlens Medvedevs
+## M9: Spring Security
 
-## Behavioural Requirements Completed
-- Books can be created
-- All books can be retrieved
-- A single book can be retrieved by ID
-- Books can be deleted
-- Books can be filtered and searched by their fields.
-- Controller delegates to Service, which delegates to Repository
-- DTOs are used for requests and responses
+### What was done
 
-## Stretch goals Completed
-- Request validation
-- Custom exception handling
-- Searching by partial title
-- Add 'borrow' and 'return' endpoints along with the new 'borrowedStatus' field to the Book entity 
-(kept the existing 'available' field instead of adding 'borrowedStatus', since both would carry the same meaning)
+- Added `spring-boot-starter-security` to pom.xml
+- Created `SecurityConfig` with a `SecurityFilterChain` bean
+- Created `UserConfig` with two users (BCrypt encoded passwords):
+    - `user` / `user` with role `USER`
+    - `admin` / `admin` with role `ADMIN`
+- Configured endpoint protection:
+    - `GET /api/books/**` -> any authenticated user
+    - `POST /api/books` -> ADMIN only
+    - `PUT /api/books/**` -> ADMIN only
+    - `DELETE /api/books/**` -> ADMIN only
+
+### Testing
+
+Behaviour was verified manually through Postman (Basic Auth), and also with automated requests in `src/test/java/bootcamp/hibernate_practical/httptest/requests.http` (IntelliJ HTTP Client).
+
+Verified scenarios:
+- GET without auth -> 401
+- GET with user/user -> 200
+- GET with admin/admin -> 200
+- POST with user/user -> 403
+- POST with admin/admin -> 201
+- PUT with user/user -> 403
+- DELETE with user/user -> 403
